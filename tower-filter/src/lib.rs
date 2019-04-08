@@ -4,6 +4,7 @@
 extern crate futures;
 extern crate tower_layer;
 extern crate tower_service;
+extern crate tower_util;
 
 pub mod error;
 pub mod future;
@@ -46,7 +47,7 @@ where
     type Future = ResponseFuture<U::Future, T, Request>;
 
     fn poll_ready(&mut self) -> Poll<(), Self::Error> {
-        self.inner.poll_ready().map_err(error::Error::inner)
+        Ok(().into())
     }
 
     fn call(&mut self, request: Request) -> Self::Future {

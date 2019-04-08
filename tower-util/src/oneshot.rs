@@ -1,4 +1,4 @@
-use std::mem;
+use std::{fmt, mem};
 
 use futures::{Async, Future, Poll};
 use tower_service::Service;
@@ -7,12 +7,13 @@ use tower_service::Service;
 /// is ready, and then calling `Service::call` with the request, and
 /// waiting for that `Future`.
 pub struct Oneshot<S: Service<Req>, Req> {
-    state: State<S, Req>,
+    state: State<S, Req, S::Future>,
 }
 
-enum State<S: Service<Req>, Req> {
+#[derive(Debug)]
+enum State<S, Req, Fut> {
     NotReady(S, Req),
-    Called(S::Future),
+    Called(Fut),
     Tmp,
 }
 
@@ -58,5 +59,18 @@ where
                 State::Tmp => panic!("polled after complete"),
             }
         }
+    }
+}
+
+impl<S, Request> fmt::Debug for Oneshot<S, Request>
+where
+    Request: fmt::Debug,
+    S: Service<Request> + fmt::Debug,
+    S::Future: fmt::Debug,
+{
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.debug_struct("Oneshot")
+            .field("state", &self.state)
+            .finish()
     }
 }
